@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Click Speed Test</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --accent: #6c5ce7;
+    --accent2: #00d2a0;
+    --text: #f1f1f6;
+    --muted: #8a8fa3;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body {
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 0%, #1c2030 0%, var(--bg) 60%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--text);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-user-select: none;
+    user-select: none;
+    overflow: hidden;
+  }
+  .card {
+    background: var(--panel);
+    border-radius: 20px;
+    padding: 32px 24px;
+    width: 380px;
+    max-width: 92vw;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  h1 {
+    font-size: clamp(20px, 5.5vw, 24px);
+    margin: 0 0 4px;
+    letter-spacing: 0.5px;
+  }
+  p.sub {
+    color: var(--muted);
+    margin: 0 0 28px;
+    font-size: 14px;
+  }
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .stat {
+    flex: 1;
+  }
+  .stat .label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .stat .value {
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  #clickBtn {
+    width: 100%;
+    padding: clamp(40px, 14vh, 60px) 0;
+    font-size: clamp(18px, 5vw, 22px);
+    font-weight: 700;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent), #8e6cf1);
+    color: white;
+    cursor: pointer;
+    transition: transform 0.06s ease, box-shadow 0.2s ease;
+    box-shadow: 0 10px 30px rgba(108, 92, 231, 0.4);
+    user-select: none;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+  }
+  #clickBtn:active {
+    transform: scale(0.96);
+  }
+  #clickBtn:disabled {
+    background: linear-gradient(135deg, #444, #333);
+    box-shadow: none;
+    cursor: default;
+  }
+  .result {
+    margin-top: 24px;
+    min-height: 20px;
+    color: var(--accent2);
+    font-weight: 600;
+  }
+  .reset {
+    margin-top: 16px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--muted);
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .reset:hover {
+    color: var(--text);
+    border-color: rgba(255,255,255,0.3);
+  }
+  .duration-select {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .duration-select button {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .duration-select button.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>⚡ Click Speed Test</h1>
+    <p class="sub">How many clicks can you land before time runs out?</p>
+
+    <div class="duration-select" id="durationSelect">
+      <button data-t="5">5s</button>
+      <button data-t="10" class="active">10s</button>
+      <button data-t="30">30s</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="label">Time</div>
+        <div class="value" id="timeLeft">10.0</div>
+      </div>
+      <div class="stat">
+        <div class="label">Clicks</div>
+        <div class="value" id="clickCount">0</div>
+      </div>
+      <div class="stat">
+        <div class="label">CPS</div>
+        <div class="value" id="cpsLive">0.0</div>
+      </div>
+    </div>
+
+    <button id="clickBtn">CLICK!</button>
+
+    <div class="result" id="result"></div>
+    <button class="reset" id="resetBtn">Reset</button>
+  </div>
+
+<script>
+  const clickBtn = document.getElementById('clickBtn');
+  const timeLeftEl = document.getElementById('timeLeft');
+  const clickCountEl = document.getElementById('clickCount');
+  const cpsLiveEl = document.getElementById('cpsLive');
+  const resultEl = document.getElementById('result');
+  const resetBtn = document.getElementById('resetBtn');
+  const durationButtons = document.querySelectorAll('#durationSelect button');
+
+  let duration = 10;
+  let timeLeft = duration;
+  let clicks = 0;
+  let started = false;
+  let timerInterval = null;
+  let bestCps = parseFloat(localStorage.getItem('bestCps_' + duration)) || 0;
+
+  function updateBestDisplay() {
+    bestCps = parseFloat(localStorage.getItem('bestCps_' + duration)) || 0;
+  }
+
+  function resetGame() {
+    clearInterval(timerInterval);
+    started = false;
+    clicks = 0;
+    timeLeft = duration;
+    timeLeftEl.textContent = duration.toFixed(1);
+    clickCountEl.textContent = '0';
+    cpsLiveEl.textContent = '0.0';
+    resultEl.textContent = '';
+    clickBtn.disabled = false;
+    clickBtn.textContent = 'CLICK!';
+  }
+
+  durationButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      durationButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      duration = parseInt(btn.dataset.t, 10);
+      updateBestDisplay();
+      resetGame();
+    });
+  });
+
+  clickBtn.addEventListener('click', () => {
+    if (!started) {
+      started = true;
+      const startTime = performance.now();
+      timerInterval = setInterval(() => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        timeLeft = Math.max(0, duration - elapsed);
+        timeLeftEl.textContent = timeLeft.toFixed(1);
+        cpsLiveEl.textContent = (clicks / (duration - timeLeft || 1)).toFixed(1);
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 50);
+    }
+    if (timeLeft > 0) {
+      clicks++;
+      clickCountEl.textContent = clicks;
+    }
+  });
+
+  function endGame() {
+    clearInterval(timerInterval);
+    clickBtn.disabled = true;
+    const cps = clicks / duration;
+    cpsLiveEl.textContent = cps.toFixed(1);
+    updateBestDisplay();
+    let msg = `${clicks} clicks — ${cps.toFixed(2)} CPS`;
+    if (cps > bestCps) {
+      localStorage.setItem('bestCps_' + duration, cps.toFixed(2));
+      msg += ' 🎉 New Best!';
+    } else {
+      msg += ` (Best: ${bestCps.toFixed(2)} CPS)`;
+    }
+    resultEl.textContent = msg;
+  }
+
+  resetBtn.addEventListener('click', resetGame);
+
+  resetGame();
+</script>
+</body>
+</html>
